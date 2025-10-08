@@ -46,13 +46,6 @@ export async function POST(req: NextRequest) {
         // Runtime check for the tool's availability, as it is declared globally but needs runtime definition.
         if (typeof gemkick_corpus === 'undefined' || !gemkick_corpus.lookup_urls) {
             console.warn("The gemkick_corpus tool is not defined or available at runtime. Skipping syllabus fetch.");
-            if (FALLBACK_SYLLABUS_CONTENT && FALLBACK_SYLLABUS_CONTENT.length > 50) {
-                // If the tool is missing but the developer provided manual content, use it.
-                syllabusContext = FALLBACK_SYLLABUS_CONTENT;
-                console.log(`Using hardcoded fallback syllabus content (length: ${syllabusContext.length}).`);
-            } else {
-                syllabusContext = "Syllabus context could not be loaded because the required tool is unavailable and no manual fallback was provided.";
-            }
         } else {
             console.log("Fetching syllabus content from Google Drive...");
             // Call the gemkick_corpus tool to fetch the file content
