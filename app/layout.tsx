@@ -8,6 +8,14 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Math Problem Generator',
   description: 'AI-powered math problem generator for Primary 5 students',
+  icons: {
+    // This handles the main <link rel="icon" href="/favicon.png" />
+    icon: '/favicon.png', 
+    // This handles <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png" />
+    apple: '/favicon.png', 
+    // You can add other sizes explicitly if needed, but Next.js often handles optimization
+    // for you when you provide the main icon.
+  },
 }
 
 export default function RootLayout({
