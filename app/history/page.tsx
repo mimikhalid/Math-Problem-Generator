@@ -126,7 +126,12 @@ export default function HistoryPage() {
                 </div>
             </div>
             )}
-
+            <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="fixed bottom-6 right-6 bg-indigo-500 text-white px-4 py-2 rounded-full shadow-lg hover:bg-indigo-600 transition-all"
+            >
+            ↑ Back to Top
+            </button>
             {/* Solution Modal */}
             {showModal && selectedSolution && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">

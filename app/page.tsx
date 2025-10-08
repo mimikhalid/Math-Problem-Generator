@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useQuiz } from  '../lib/QuizContext';
 import { useRouter } from 'next/navigation';
 // --- New/Updated Interfaces ---
@@ -34,6 +34,7 @@ export default function Home() {
   } = useQuiz();
 
   const [hydrated, setHydrated] = useState(false);
+  const problemRef = useRef<HTMLDivElement>(null);
   const [difficulty, setDifficulty] = useState<Difficulty>('medium')
   const [problemType, setProblemType] = useState<ProblemType>('addition')
 
@@ -50,7 +51,11 @@ export default function Home() {
 
   useEffect(() => {
     setHydrated(true);
-  }, []);
+
+    if (problem && problemRef.current) {
+      problemRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [problem]);
 
   // --- Generate Problem ---
   const generateProblem = useCallback(async () => {
@@ -81,7 +86,8 @@ export default function Home() {
         setProblem({ ...data, hint_used: false })
         setHintText(data.hint_text);
         setGenerateProblem(false)
-
+        // Scroll to problem card
+        problemRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     } catch (error) {
       console.error(error)
@@ -198,7 +204,7 @@ return (
       {/* --- Header --- */}
       <header className="relative text-center bg-blue-400 dark:bg-blue-600 text-white rounded-2xl p-8 shadow-lg max-w-4xl mx-auto w-full">
         <h1 className="text-3xl md:text-5xl font-extrabold font-inter flex items-center justify-center gap-3">
-          🧮 Math Problem Generator
+          Math Problem Generator
         </h1>
         <p className="mt-6 text-lg md:text-xl text-blue-100 dark:text-blue-200">
           Challenge your Primary 5 math skills with AI-generated problems tailored to your learning pace.
@@ -284,7 +290,7 @@ return (
 
       {/* --- Card 2: Problem Display & Answer Form --- */}
       {problem && (
-        <div className="bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-6 border border-gray-100 dark:border-gray-700 space-y-6">
+        <div ref={problemRef} className="bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-6 border border-gray-100 dark:border-gray-700 space-y-6">
 
            {/* Problem Display */}
             <div className="p-6 bg-white rounded-xl shadow-md space-y-4 text-xl leading-relaxed">
@@ -360,8 +366,6 @@ return (
             </div>
           </form>
 
-
-
           {/* Feedback Area */}
           {(isCorrect !== null || feedback) && (
             <div className={`mt-4 p-4 rounded-xl shadow-md ${statusClasses}`}>
@@ -391,6 +395,14 @@ return (
               </div>
             </div>
           )}
+
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="fixed bottom-6 right-6 bg-indigo-500 text-white px-4 py-2 rounded-full shadow-lg hover:bg-indigo-600 transition-all"
+          >
+            ↑ Back to Top
+          </button>
+
         </div>
       )}
 
