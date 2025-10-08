@@ -41,6 +41,7 @@ export default function Home() {
   const [userAnswer, setUserAnswer] = useState('')
   const [feedback, setFeedback] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isGenerateProblem, setGenerateProblem] = useState(false)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [hintText, setHintText] = useState('')
@@ -54,6 +55,7 @@ export default function Home() {
   // --- Generate Problem ---
   const generateProblem = useCallback(async () => {
     setIsLoading(true)
+    setGenerateProblem(true)
     setProblem(null)
     setUserAnswer('')
     setFeedback('')
@@ -78,6 +80,8 @@ export default function Home() {
       } else {
         setProblem({ ...data, hint_used: false })
         setHintText(data.hint_text);
+        setGenerateProblem(false)
+
       }
     } catch (error) {
       console.error(error)
@@ -161,6 +165,8 @@ export default function Home() {
     router.push('/history');
   };
 
+  const isDisabledState = !userAnswer || isLoading || isSubmitting || isCorrect !== null;
+  
   // Tailwind classes for submission status box
   const statusClasses = useMemo(() => {
     if (isCorrect === null) {
@@ -185,205 +191,217 @@ export default function Home() {
     // Return a placeholder (blank or loading) to avoid mismatch
     return <div className="min-h-screen bg-gray-100 dark:bg-gray-900" />;
   }
-  return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex justify-center p-4">
-      <div className="w-full max-w-3xl bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-8 space-y-8 border border-gray-100 dark:border-gray-700">
+return (
+  <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex justify-center p-4">
+    <div className="w-full max-w-4xl space-y-8">
 
-        {/* Header */}
-        <header className="text-center space-y-2">
-          <h1 className="text-4xl font-extrabold text-indigo-700 dark:text-indigo-400 font-inter">
-            Math Problem Generator 🧠
-          </h1>
+      {/* --- Header --- */}
+      <header className="relative text-center bg-blue-400 dark:bg-blue-600 text-white rounded-2xl p-8 shadow-lg max-w-4xl mx-auto w-full">
+        <h1 className="text-3xl md:text-5xl font-extrabold font-inter flex items-center justify-center gap-3">
+          🧮 Math Problem Generator
+        </h1>
+        <p className="mt-6 text-lg md:text-xl text-blue-100 dark:text-blue-200">
+          Challenge your Primary 5 math skills with AI-generated problems tailored to your learning pace.
+        </p>
 
-          <div className="text-xl font-semibold text-gray-600 dark:text-gray-300">
-            Score: <span className="text-indigo-600 dark:text-indigo-400">{score}</span>
-          </div>
-
-          {/* Start Over Button */}
-          <button
-            onClick={() => setShowResetModal(true)}
-            className="mt-3 px-5 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg shadow-md 
-                      transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-4 
-                      focus:ring-red-300 text-sm"
-          >
-            🔄 Start Over
-          </button>
-        </header>
-
-        {/* --- Problem Settings and Generator --- */}
-        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-inner space-y-4" style={{ paddingTop: '10%' }}>
-          <div className="flex flex-col sm:flex-row gap-4 justify-between">
-            {/* Difficulty Select */}
-            <div className="flex-1">
-              <label htmlFor="difficulty" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Difficulty
-              </label>
-              <select
-                id="difficulty"
-                value={difficulty}
-                onChange={(e) => setDifficulty(e.target.value as Difficulty)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
-                          focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-gray-200"
-              >
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-              </select>
-            </div>
-
-            {/* Problem Type Select */}
-            <div className="flex-1">
-              <label htmlFor="problemType" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Problem Type
-              </label>
-              <select
-                id="problemType"
-                value={problemType}
-                onChange={(e) => setProblemType(e.target.value as ProblemType)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm 
-                          focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-800 dark:text-gray-200"
-              >
-                <option value="addition">Addition</option>
-                <option value="subtraction">Subtraction</option>
-                <option value="multiplication">Multiplication</option>
-                <option value="division">Division</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Generate Button */}
-          <div className="flex justify-center" style={{ paddingTop: '10%' }}>
-            <button
-              onClick={generateProblem}
-              disabled={isLoading || isSubmitting}
-              className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-lg shadow-lg hover:bg-indigo-700 
-                        transition-all duration-300 transform hover:scale-[1.02] focus:outline-none 
-                        focus:ring-4 focus:ring-indigo-300 disabled:bg-gray-400 disabled:shadow-none 
-                        disabled:transform-none disabled:cursor-not-allowed flex items-center min-w-[200px] justify-center"
-            >
-              {(isLoading || isSubmitting) && (
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 
-                  5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 
-                  7.938l3-2.647z"></path>
-                </svg>
-              )}
-              {isLoading ? 'Generating...' : (isSubmitting ? 'Checking...' : 'Generate New Problem')}
-            </button>
-          </div>
+        {/* Score Badge */}
+        <div className="mt-4 text-xl md:text-2xl font-semibold flex justify-center items-center gap-2">
+          <span className="px-3 py-1 bg-yellow-300 text-indigo-800 font-bold rounded-full shadow-md text-lg">
+            🎯 {score} Points
+          </span>
         </div>
 
-        {/* Problem Display Area */}
-        {problem && (
-          <div className="mt-6 p-6 bg-indigo-50 dark:bg-indigo-900 border-l-4 border-indigo-500 dark:border-indigo-400 rounded-xl shadow-md space-y-4 whitespace-pre-line">
-            <h2 className="text-2xl font-bold text-indigo-900 dark:text-indigo-200">The Problem:</h2>
-            <p className="text-gray-800 dark:text-gray-100 text-xl leading-relaxed">{problem.problem_text}</p>
-          </div>
-        )}
+        {/* Buttons */}
+        <div className="mt-4 flex flex-col sm:flex-row justify-center items-center gap-4">
+          <button
+            onClick={() => setShowResetModal(true)}
+            className="px-6 py-3 bg-pink-400 hover:bg-pink-500 text-white font-bold rounded-xl shadow-md 
+                       transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-pink-300 text-sm"
+          >
+            Start Over
+          </button>
 
-        {/* Answer Form */}
-        {problem && (
-          <form onSubmit={submitAnswer} className="space-y-6 pt-4">
-            <label htmlFor="answer" className="block text-lg font-medium text-gray-700 dark:text-gray-300">
-              Your Answer (Number):
-            </label>
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full">
-              <input
-                id="answer"
-                type="number"
-                value={userAnswer}
-                onChange={(e) => setUserAnswer(e.target.value)}
-                placeholder="Enter numerical answer"
-                className="w-full sm:flex-grow px-5 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-lg 
-                          focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm 
-                          dark:bg-gray-700 dark:text-white"
-                required
-                disabled={isLoading || isSubmitting || isCorrect !== null}
-              />
+          <button
+            onClick={handleViewHistory}
+            className="px-6 py-3 bg-green-400 hover:bg-green-500 text-white font-bold rounded-xl shadow-md 
+                       transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300 text-sm"
+          >
+            History
+          </button>
+        </div>
+      </header>
 
-              <button
-                type="submit"
-                disabled={!userAnswer || isLoading || isSubmitting || isCorrect !== null}
-                className={`w-full sm:w-auto px-8 py-3 font-bold rounded-lg shadow-lg transition-all duration-300 
-                  ${
-                    !userAnswer || isCorrect !== null
-                      ? 'bg-gray-300 text-gray-600 cursor-not-allowed dark:bg-gray-600 dark:text-gray-400' 
-                      : 'bg-green-600 text-white hover:bg-green-700 focus:ring-4 focus:ring-green-300'
-                  }`}
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit'}
-              </button>
+      <div className="bg-blue-200 rounded-2xl p-6 shadow-md space-y-6">
+        {/* Difficulty */}
+        <div>
+          <label htmlFor="difficulty" className="block text-lg font-bold text-blue-800 mb-2">
+            Choose Difficulty
+          </label>
+          <select
+            id="difficulty"
+            value={difficulty}
+            onChange={(e) => setDifficulty(e.target.value as Difficulty)}
+            className="w-full px-5 py-3 rounded-xl shadow-md bg-white text-blue-800 font-semibold text-lg 
+                      focus:ring-2 focus:ring-blue-400"
+          >
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+          </select>
+        </div>
+
+        {/* Problem Type */}
+        <div>
+          <label htmlFor="problemType" className="block text-lg font-bold text-blue-800 mb-2">
+            Choose Problem Type
+          </label>
+          <select
+            id="problemType"
+            value={problemType}
+            onChange={(e) => setProblemType(e.target.value as ProblemType)}
+            className="w-full px-5 py-3 rounded-xl shadow-md bg-white text-blue-800 font-semibold text-lg 
+                      focus:ring-2 focus:ring-blue-400"
+          >
+            <option value="addition">Addition</option>
+            <option value="subtraction">Subtraction</option>
+            <option value="multiplication">Multiplication</option>
+            <option value="division">Division</option>
+          </select>
+        </div>
+
+        {/* Generate Button */}
+        <div className="flex justify-center">
+          <button
+            onClick={generateProblem}
+            disabled={isGenerateProblem}
+            className="w-full px-6 py-3 bg-green-400 hover:bg-green-500 text-white font-bold rounded-xl shadow-md
+                      transition-all duration-300 transform hover:scale-105 flex items-center justify-center text-lg"
+          >
+            {isGenerateProblem ? 'Generating...' : 'Challenge Yourself!'}
+          </button>
+        </div>
+      </div>
+
+      {/* --- Card 2: Problem Display & Answer Form --- */}
+      {problem && (
+        <div className="bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-6 border border-gray-100 dark:border-gray-700 space-y-6">
+
+           {/* Problem Display */}
+            <div className="p-6 bg-white rounded-xl shadow-md space-y-4 text-xl leading-relaxed">
+              <h2 className="font-bold text-indigo-700 text-2xl">📝 The Problem:</h2>
+              <p className="text-indigo-900">{problem.problem_text}</p>
             </div>
 
-            {/* Hint Button */}
-            {isCorrect === null && problem && (
-              <div className="flex justify-end">
+          {/* Answer Form */}
+          <form onSubmit={submitAnswer} className="space-y-4">
+            <label
+              htmlFor="answer"
+              className="block text-lg font-bold text-indigo-700"
+            >
+              Your Answer:
+            </label>
+
+            <input
+              id="answer"
+              type="number"
+              value={userAnswer}
+              onChange={(e) => setUserAnswer(e.target.value)}
+              placeholder="Enter your answer"
+              className="w-full px-5 py-3 border-2 border-indigo-300 rounded-xl text-lg focus:ring-2 focus:ring-indigo-400 shadow-sm"
+              required
+              disabled={isLoading || isSubmitting || isCorrect !== null}
+            />
+
+            {/* Buttons */}
+            <div className="flex flex-col gap-3 w-full">
+              <div
+                className="relative w-full group"
+                onClick={(e) => {
+                  if (isDisabledState) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }
+                }}
+              >
+                {/* Tooltip hanya muncul bila hover button Submit */}
+                {isDisabledState && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 
+                                  mb-2 px-3 py-1 text-xs text-white bg-gray-700 rounded-lg 
+                                  opacity-0 group-hover:opacity-100 transition duration-300 whitespace-nowrap 
+                                  pointer-events-none z-10">
+                    Please enter your answer.
+                  </div>
+                )}
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  className={`w-full px-6 py-3 font-bold rounded-xl shadow-lg text-white text-lg
+                  ${isDisabledState
+                    ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                    : "bg-gradient-to-r from-green-400 to-green-600 hover:scale-105 transition-transform"}
+                  `}
+                >
+                  {isSubmitting ? "Submitting..." : "Submit"}
+                </button>
+              </div>
+
+              {/* Get Hint Button */}
+              {isCorrect === null && problem && (
                 <button
                   type="button"
                   onClick={getHint}
                   disabled={isLoading || isSubmitting}
-                  className="px-4 py-2 text-sm bg-yellow-500 text-white font-semibold rounded-md hover:bg-yellow-600 transition-colors disabled:bg-gray-400"
-                >
+                  className="w-full px-6 py-3 text-lg bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-bold rounded-xl hover:scale-105 transition-transform"
+                  >
                   Get Hint
                 </button>
-              </div>
-            )}
-
-            {isCorrect === null && !userAnswer && (
-              <p className="text-sm text-red-500 dark:text-red-400 mt-1 text-center">Please enter an answer before submitting.</p>
-            )}
+              )}
+            </div>
           </form>
-        )}
 
-        {/* --- Feedback Area --- */}
-        {(isCorrect !== null || feedback) && (
-          <div className={`mt-4 p-5 border-2 rounded-xl transition-all duration-300 ${statusClasses}`}>
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0 text-xl pt-1">
-                {isCorrect === true ? "✅" : isCorrect === false ? "❌" : "💡"}
-              </div>
-              <div>
-                <p className="text-lg font-bold">
-                  {isCorrect === true ? "Correct Answer!" : isCorrect === false ? "Incorrect Answer" : "Status Update"}
-                </p>
-                <p className="mt-1 text-base whitespace-pre-line leading-relaxed">{feedback}</p>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* --- Hint Area --- */}
-        {(isCorrect === null && hintSection != '') && (
-          <div className={`mt-4 p-5 border-2 rounded-xl transition-all duration-300 ${statusClasses}`}>
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0 text-xl pt-1">💡</div>
-              <div>
-                <p className="text-lg font-bold">Hint</p>
-                <p className="mt-1 text-base whitespace-pre-line leading-relaxed">{hintSection}</p>
+
+          {/* Feedback Area */}
+          {(isCorrect !== null || feedback) && (
+            <div className={`mt-4 p-4 rounded-xl shadow-md ${statusClasses}`}>
+              <div className="flex items-start gap-3">
+                <div className="text-2xl pt-1">
+                  {isCorrect === true ? "✅" : isCorrect === false ? "❌" : "💡"}
+                </div>
+                <div>
+                  <p className="text-lg font-bold">
+                    {isCorrect === true ? "Correct Answer!" : isCorrect === false ? "Incorrect Answer" : "Status Update"}
+                  </p>
+                  <p className="mt-1 text-base whitespace-pre-line leading-relaxed">{feedback}</p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Footer */}
-        <div className="text-center pt-6">
-          <button 
-            onClick={handleViewHistory}
-            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 
-                      font-medium transition-colors"
-          >
-            📜 View Full History
-          </button>
+          {/* Hint Area */}
+          {(isCorrect === null && hintSection != '') && (
+            <div className={`mt-4 p-5 border-2 rounded-xl transition-all duration-300 ${statusClasses}`}>
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0 text-xl pt-1">💡</div>
+                <div>
+                  <p className="text-lg font-bold">Hint</p>
+                  <p className="mt-1 text-base whitespace-pre-line leading-relaxed">{hintSection}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      )}
+
 
       {/* --- Modal Confirmation --- */}
       {showResetModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-2xl max-w-sm w-full text-center">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
-              Are you sure you want to restart?
+              Are you sure you want to start over? <br />
+              This will clear your full history and total score.
             </h2>
             <div className="flex justify-center gap-4">
               <button
@@ -393,7 +411,7 @@ export default function Home() {
                 }}
                 className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md font-semibold"
               >
-                Yes, Reset
+                Yes
               </button>
               <button
                 onClick={() => setShowResetModal(false)}
@@ -407,5 +425,7 @@ export default function Home() {
         </div>
       )}
     </div>
+    </div>
   );
+
 }
