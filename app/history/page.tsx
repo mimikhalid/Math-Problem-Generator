@@ -128,7 +128,7 @@ export default function HistoryPage() {
             )}
             <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-6 right-6 bg-indigo-500 text-white px-4 py-2 rounded-full shadow-lg hover:bg-indigo-600 transition-all"
+            className="fixed bottom-16 right-6 bg-indigo-500 text-white px-4 py-2 rounded-full shadow-lg hover:bg-indigo-600 transition-all"
             >
             ↑ Back to Top
             </button>

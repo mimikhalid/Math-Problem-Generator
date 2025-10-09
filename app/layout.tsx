@@ -13,8 +13,6 @@ export const metadata: Metadata = {
     icon: '/favicon.png', 
     // This handles <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png" />
     apple: '/favicon.png', 
-    // You can add other sizes explicitly if needed, but Next.js often handles optimization
-    // for you when you provide the main icon.
   },
 }
 
