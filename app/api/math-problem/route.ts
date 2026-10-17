@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
     
     // --- 3. EXECUTE GEMINI API CALL WITH BACKOFF ---
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${process.env.GEMINI_MODEL || "gemini-3.8-flash"}:generateContent?key=${apiKey}`;
     const payload = {
         contents: [{ parts: [{ text: userQuery }] }],
         systemInstruction: { parts: [{ text: systemPrompt }] },
@@ -135,7 +135,7 @@ export async function POST(req: NextRequest) {
             });
 
             if (!response.ok) {
-                throw new Error(`API returned status ${response.status}`);
+                throw new Error(`API returned status ${response.status}: ${await response.text()}`);
             }
 
             const result = await response.json();

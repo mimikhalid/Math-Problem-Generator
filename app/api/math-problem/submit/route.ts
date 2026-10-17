@@ -82,14 +82,14 @@ export async function POST(req: NextRequest) {
 
         for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
             try {
-                const apiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`, {
+                const apiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${process.env.GEMINI_MODEL || "gemini-3.8-flash"}:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
     
                 if (!apiResponse.ok) {
-                    throw new Error(`Gemini API returned status ${apiResponse.status}`);
+                    throw new Error(`Gemini API returned status ${apiResponse.status}: ${await apiResponse.text()}`);
                 }
     
                 const result = await apiResponse.json();
