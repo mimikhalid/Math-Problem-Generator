@@ -8,8 +8,18 @@ export interface HistoryItem {
     isCorrect: boolean;
     type: string;
     difficulty: string;
-    correctAnswer: number;
+    correctAnswer: number | string;
     step_by_step_solution: string[]
+}
+
+/** One finished Latih Tubi round (individual sums aren't kept). */
+export interface DrillRound {
+    id: string;
+    date: string; // ISO timestamp
+    grade: number;
+    seconds: number;
+    correct: number;
+    attempted: number;
 }
 
 interface QuizContextType {
@@ -17,6 +27,8 @@ interface QuizContextType {
     setScore: React.Dispatch<React.SetStateAction<number>>;
     history: HistoryItem[];
     setHistory: React.Dispatch<React.SetStateAction<HistoryItem[]>>;
+    drillHistory: DrillRound[];
+    setDrillHistory: React.Dispatch<React.SetStateAction<DrillRound[]>>;
     currentProblem: any;
     setCurrentProblem: React.Dispatch<React.SetStateAction<any>>;
 }
@@ -40,6 +52,14 @@ export const QuizProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return [];
     });
     
+    const [drillHistory, setDrillHistory] = useState<DrillRound[]>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('drillHistory');
+            return saved ? JSON.parse(saved) : [];
+        }
+        return [];
+    });
+
     // State to hold the active problem object
     const [currentProblem, setCurrentProblem] = useState<any>(null);
 
@@ -53,9 +73,13 @@ export const QuizProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('quizHistory', JSON.stringify(history));
     }, [history]);
 
+    useEffect(() => {
+        localStorage.setItem('drillHistory', JSON.stringify(drillHistory));
+    }, [drillHistory]);
+
 
     return (
-        <QuizContext.Provider value={{ score, setScore, history, setHistory, currentProblem, setCurrentProblem }}>
+        <QuizContext.Provider value={{ score, setScore, history, setHistory, drillHistory, setDrillHistory, currentProblem, setCurrentProblem }}>
             {children}
         </QuizContext.Provider>
     );

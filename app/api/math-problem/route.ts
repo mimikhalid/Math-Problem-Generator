@@ -1,215 +1,168 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { QuestionFormat, OPTION_LETTERS, findTopic, formatPrompt, isGrade, levelPrompt } from '../../../lib/curriculum';
+import { generateJson } from '../../../lib/gemini';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const apiKey = process.env.GOOGLE_API_KEY;
-declare const gemkick_corpus: any;
 
-interface ProblemRequest {
-    difficulty: 'easy' | 'medium' | 'hard';
-    problemType: 'addition' | 'subtraction' | 'multiplication' | 'division';
-}
+type Difficulty = 'easy' | 'medium' | 'hard';
+const DIFFICULTIES: Difficulty[] = ['easy', 'medium', 'hard'];
+const MIN_COUNT = 1;
+const MAX_COUNT = 15;
 
-interface MathProblemResponse {
+// Writing a whole set can take ~30s; give the Vercel function room for that
+export const maxDuration = 60;
+
+interface GeneratedProblem {
     problem_text: string;
-    final_answer: number;
+    final_answer?: number;
+    options?: string[];
+    correct_option_index?: number;
     hint_text: string;
     step_by_step_solution: string[];
 }
 
-// The Google Drive URL to the syllabus
-const SYLLABUS_URL = "https://drive.google.com/file/d/1nk29gckpw82fGTkZGUm7djzmkjxefqDa/view";
-const FALLBACK_SYLLABUS_CONTENT = "";
 /**
- * Next.js API route handler for generating math problems.
+ * Generates a practice set: `count` problems in a single Gemini call (one call per set keeps us
+ * well inside the free-tier quota), each saved to Supabase so submissions can reference it.
  */
 export async function POST(req: NextRequest) {
-    let requestData: ProblemRequest;
+    let body: any;
     try {
-        const body = await req.json();
-        // Validate required fields from the frontend
-        if (!body.difficulty || !body.problemType) {
-            return NextResponse.json({ error: 'Missing difficulty or problemType in request body.' }, { status: 400 });
-        }
-        requestData = body as ProblemRequest;
+        body = await req.json();
     } catch (e) {
         return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 });
     }
-    const { difficulty, problemType } = requestData;
 
-    // --- 1. FETCH CONTEXT (Syllabus) FROM GOOGLE DRIVE ---
-    let syllabusContext = "";
-    try {
-        // Runtime check for the tool's availability, as it is declared globally but needs runtime definition.
-        if (typeof gemkick_corpus === 'undefined' || !gemkick_corpus.lookup_urls) {
-            console.warn("The gemkick_corpus tool is not defined or available at runtime. Skipping syllabus fetch.");
-        } else {
-            console.log("Fetching syllabus content from Google Drive...");
-            // Call the gemkick_corpus tool to fetch the file content
-            const corpusResult = await gemkick_corpus.lookup_urls({ urls: [SYLLABUS_URL] });
-            
-            // Assuming the tool returns a structure where the content can be extracted
-            if (corpusResult && corpusResult.length > 0) {
-                console.log(corpusResult)
-                // Extract content from the first item
-                syllabusContext = corpusResult[0].content || corpusResult[0].summarized_content || "";
-                if (syllabusContext.length > 5000) {
-                    // Truncate long content to fit within reasonable prompt limits
-                    syllabusContext = syllabusContext.substring(0, 5000) + " [CONTEXT TRUNCATED]";
-                }
-                console.log(`Syllabus context retrieved (length: ${syllabusContext.length})`);
-            } else {
-                console.warn("Syllabus lookup returned no content.");
-                syllabusContext = "Syllabus context could not be loaded.";
-            }
-        }
-    } catch (e) {
-        console.error("Failed to fetch syllabus from Google Drive:", e);
-        // The problem generation should still proceed, but without the syllabus context
-        syllabusContext = "Syllabus context could not be loaded due to an unexpected error.";
+    const difficulty: Difficulty = body.difficulty;
+    const grade = Number(body.grade);
+    const topic = findTopic(body.topic);
+    const format: QuestionFormat = body.format === 'mcq' ? 'mcq' : 'numeric';
+    const language = body.language === 'ms' ? 'ms' : 'en';
+    const count = body.count === undefined ? 1 : Number(body.count);
+
+    if (!DIFFICULTIES.includes(difficulty) || !isGrade(grade) || !topic || !topic.grades.includes(grade)
+        || !Number.isInteger(count) || count < MIN_COUNT || count > MAX_COUNT) {
+        return NextResponse.json({ error: `Provide a valid difficulty, grade (1-6), a topic taught in that grade and a count between ${MIN_COUNT} and ${MAX_COUNT}.` }, { status: 400 });
     }
 
+    const languageInstruction = language === 'ms'
+        ? 'Write ALL text (problems, options, hints, steps) in Bahasa Melayu (Malaysia), using Malaysian school terms.'
+        : 'Write all text in English.';
 
-    // --- 2. CONSTRUCT PROMPTS WITH SYLLABUS CONTEXT ---
-    
-    // Add the fetched context to the system instruction
-    const syllabusInstruction = syllabusContext 
-        ? `\n\n[SYLLABUS CONTEXT]: Use the following syllabus information/topics as context to make the word problem relevant to the course content, ensuring the problem remains suitable for a 5th-grade level. \nContent: ${syllabusContext}`
-        : "";
+    const systemPrompt =
+        `You are a math problem generator for Malaysian primary school students.
+        Generate exactly ${count} different word problems of ${difficulty} difficulty.
+        ${levelPrompt(grade, [topic])}
+        Use varied everyday Malaysian contexts (RM, local names, school, family, food) and do not repeat a context.
+        ${formatPrompt(format)}
+        For each problem also give a simple but helpful hint (without giving away the answer) and a step by step solution.
+        "step_by_step_solution" is an ARRAY of short strings, each showing the operation and result for that step (the 'jalan kerja'), e.g.
+        ["1. Find the total: 10 + 5 = 15", "2. Find the remainder: 15 - 5 = 10"].
+        ${languageInstruction}
+        The response MUST be a single JSON object matching the provided schema.`;
 
-    const systemPrompt = 
-        `You are a math problem generator. Generate a single word problem that is ${difficulty} difficulty, suitable for a 5th-grade student, and primarily focuses on ${problemType} while potentially including one other basic arithmetic operation.
-        
-        ${syllabusInstruction} // INJECTED SYLLABUS CONTEXT
+    const answerProperties = format === 'mcq'
+        ? {
+            options: { type: "ARRAY", items: { type: "STRING" }, description: "Exactly 4 answer options." },
+            correct_option_index: { type: "INTEGER", description: "0-based index of the correct option." },
+        }
+        : {
+            final_answer: { type: "NUMBER", description: "The single, numerical final answer." },
+        };
 
-        You MUST provide the problem, the exact final numerical answer, a simple but helpful hint and detailed step by step solution.
-        The response MUST be a single JSON object matching the provided schema.
-        
-        Make sure "step_by_step_solution" is an ARRAY of short strings, each one showing the required mathematical operation and result for that step (the 'jalan kerja').
-        Example (for a problem where you add 10, subtract 5, then multiply by 2):
-        "step_by_step_solution": [
-            "1. Start by finding the total: 10 + 5 = 15",
-            "2. Find the remaining amount: 15 - 5 = 10",
-            "3. Calculate the final value: 10 * 2 = 20"
-        ]`;
-
-    const userQuery = `Generate a new word problem of ${difficulty} difficulty focused on ${problemType}.`;
-    
-    // --- 3. EXECUTE GEMINI API CALL WITH BACKOFF ---
-
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${process.env.GEMINI_MODEL || "gemini-3.8-flash"}:generateContent?key=${apiKey}`;
     const payload = {
-        contents: [{ parts: [{ text: userQuery }] }],
+        contents: [{ parts: [{ text: `Generate ${count} new Tahun ${grade} ${topic.en} problems of ${difficulty} difficulty.` }] }],
         systemInstruction: { parts: [{ text: systemPrompt }] },
         generationConfig: {
             responseMimeType: "application/json",
             responseSchema: {
                 type: "OBJECT",
                 properties: {
-                    problem_text: { type: "STRING", description: "The math word problem description." },
-                    final_answer: { type: "NUMBER", description: "The single, numerical final answer." },
-                    hint_text: { type: "STRING", description: "A short, helpful hint for the user." },
-                    step_by_step_solution: {
+                    problems: {
                         type: "ARRAY",
-                        items: { type: "STRING" },
-                        description: "Each step of the detailed solution in order."
-                    },
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                problem_text: { type: "STRING", description: "The math word problem description." },
+                                ...answerProperties,
+                                hint_text: { type: "STRING", description: "A short, helpful hint." },
+                                step_by_step_solution: {
+                                    type: "ARRAY",
+                                    items: { type: "STRING" },
+                                    description: "Each step of the detailed solution in order."
+                                },
+                            },
+                            required: ["problem_text", ...Object.keys(answerProperties), "hint_text", "step_by_step_solution"],
+                        }
+                    }
                 },
-                propertyOrdering: ["problem_text", "final_answer", "hint_text"]
+                required: ["problems"]
             }
         },
     };
-    let problemData: MathProblemResponse | null = null;
-    let sessionDocId: string | null = null; // Unused in this snippet, but kept
-    const MAX_RETRIES = 5;
 
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+    const isValidProblem = (p: GeneratedProblem) => {
+        const validAnswer = format === 'mcq'
+            ? Array.isArray(p.options) && p.options.length === 4
+                && Number.isInteger(p.correct_option_index)
+                && p.correct_option_index! >= 0 && p.correct_option_index! < 4
+            : typeof p.final_answer === 'number';
+        return typeof p.problem_text === 'string' && typeof p.hint_text === 'string'
+            && Array.isArray(p.step_by_step_solution) && validAnswer;
+    };
 
-            if (!response.ok) {
-                throw new Error(`API returned status ${response.status}: ${await response.text()}`);
-            }
+    const data = await generateJson<{ problems: GeneratedProblem[] }>(payload,
+        (d: any) => Array.isArray(d.problems) && d.problems.some(isValidProblem),
+        'math-problem', count > 1 ? 45 * 1000 : undefined);
 
-            const result = await response.json();
-            const jsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-
-            if (!jsonText) {
-                throw new Error("Gemini response was empty or malformed.");
-            }
-
-            // Parse and validate the structured JSON response (using the corrected Array.isArray check)
-            const parsedJson = JSON.parse(jsonText);
-            if (
-                typeof parsedJson.problem_text === 'string' &&
-                typeof parsedJson.final_answer === 'number' &&
-                typeof parsedJson.hint_text === 'string' &&
-                Array.isArray(parsedJson.step_by_step_solution)
-            ) {
-                problemData = parsedJson as MathProblemResponse;
-                break; // Success, exit loop
-            } else {
-                throw new Error("Parsed JSON did not match expected schema with all fields.");
-            }
-
-        } catch (error) {
-            console.warn(`Attempt ${attempt + 1} failed: ${error}`);
-            if (attempt === MAX_RETRIES - 1) {
-                return NextResponse.json({ error: 'Failed to generate math problem after multiple retries.' }, { status: 500 });
-            }
-            // Exponential backoff: 1s, 2s, 4s, 8s...
-            const delay = Math.pow(2, attempt) * 1000;
-            await new Promise(resolve => setTimeout(resolve, delay));
-        }
+    if (!data) {
+        return NextResponse.json({ error: 'Failed to generate problems. The AI service may be busy or out of quota; please try again later.' }, { status: 503 });
     }
 
-    if (!problemData) {
-        return NextResponse.json({ error: 'Failed to process generated content.' }, { status: 500 });
-    }
+    const problems = data.problems.filter(isValidProblem).slice(0, count).map(p => {
+        // Objective questions store the option index as the answer, with the options kept in the text
+        const correctAnswer = format === 'mcq' ? p.correct_option_index! : p.final_answer!;
+        return {
+            ...p,
+            correctAnswer,
+            answerLabel: format === 'mcq' ? `${OPTION_LETTERS[correctAnswer]}. ${p.options![correctAnswer]}` : String(correctAnswer),
+            storedText: format === 'mcq'
+                ? `${p.problem_text}\n${p.options!.map((o, i) => `${OPTION_LETTERS[i]}. ${o}`).join('\n')}`
+                : p.problem_text,
+        };
+    });
 
-    // 2. Save the generated problem to Supabase
-    try {
-        const { data, error } = await supabase
-            .from('math_problem_sessions')
-            .insert({
-                problem_text: problemData.problem_text,
-                correct_answer: problemData.final_answer, // Mapping model output to schema
-            })
-            .select('id') // Request the auto-generated primary key (session_id)
-            .single();
+    // Save the whole set in one insert; rows come back in the order they were sent
+    const { data: rows, error } = await supabase
+        .from('math_problem_sessions')
+        .insert(problems.map(p => ({ problem_text: p.storedText, correct_answer: p.correctAnswer })))
+        .select('id');
 
-        if (error) {
-            throw new Error(`Supabase Insert Error: ${error.message}`);
-        }
-
-        // The ID of the newly inserted row is the session ID
-        sessionDocId = data.id;
-
-    } catch (error) {
+    if (error || !rows || rows.length !== problems.length) {
         console.error("Supabase Save Error:", error);
-        // Return the problem data even if saving fails, but with an error message
-        return NextResponse.json({
-            problem_text: problemData.problem_text,
-            final_answer: problemData.final_answer,
-            error: 'Problem generated, but failed to save session to Supabase.'
-        }, { status: 500 });
+        return NextResponse.json({ error: 'Problems generated, but failed to save them to Supabase.' }, { status: 500 });
     }
 
-    // 3. Return the problem and session ID
     return NextResponse.json({
-        problem_text: problemData.problem_text,
-        final_answer: problemData.final_answer,
-        session_id: sessionDocId,
-        difficulty: difficulty,
-        problem_type: problemType,
-        hint_text: problemData.hint_text,
-        step_by_step_solution: problemData.step_by_step_solution
+        grade,
+        topic: topic.id,
+        difficulty,
+        format,
+        problems: problems.map((p, i) => ({
+            session_id: rows[i].id,
+            problem_text: p.problem_text,
+            format,
+            options: p.options ?? null,
+            final_answer: p.correctAnswer,
+            answer_label: p.answerLabel,
+            hint_text: p.hint_text,
+            step_by_step_solution: p.step_by_step_solution,
+            topic: topic.id,
+            difficulty,
+        })),
     });
 }

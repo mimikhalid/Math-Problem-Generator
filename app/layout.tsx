@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { QuizProvider } from '../lib/QuizContext'
+import { LanguageProvider } from '../lib/i18n'
+import AppShell from '../components/AppShell'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -24,9 +26,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <QuizProvider>
-          {children}
-        </QuizProvider>
+        <LanguageProvider>
+          <QuizProvider>
+            <AppShell>{children}</AppShell>
+          </QuizProvider>
+        </LanguageProvider>
       </body>
     </html>
   )

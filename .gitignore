@@ -1,3 +1,5 @@
 .env.local
 .next/
+.next-preview/
 node_modules/
+*.tsbuildinfo

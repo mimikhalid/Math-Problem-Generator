@@ -1,11 +1,26 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuiz, HistoryItem } from "../../lib/QuizContext";
+import { Segmented } from "../../components/Pickers";
+import { useLanguage } from "../../lib/i18n";
 
 export default function HistoryPage() {
-    const { score, history } = useQuiz();
+    const { t, language } = useLanguage();
+    const { score, history, drillHistory } = useQuiz();
     const displayHistory = [...history].reverse();
+    const displayDrills = [...drillHistory].reverse();
+    const [tab, setTab] = useState<'practice' | 'drill'>('practice');
+
+    const bestDrill = drillHistory.reduce((best, r) => Math.max(best, r.correct), 0);
+    const drillAttempted = drillHistory.reduce((sum, r) => sum + r.attempted, 0);
+    const drillCorrect = drillHistory.reduce((sum, r) => sum + r.correct, 0);
+    const drillAccuracy = drillAttempted > 0 ? Math.round((drillCorrect / drillAttempted) * 100) : 0;
+    const formatDate = (iso: string) => new Date(iso).toLocaleString(language === 'ms' ? 'ms-MY' : 'en-MY', { dateStyle: 'medium', timeStyle: 'short' });
+
+    // History comes from localStorage, so render it only after mount
+    const [hydrated, setHydrated] = useState(false);
+    useEffect(() => setHydrated(true), []);
 
     // Pagination
     const itemsPerPage = 5;
@@ -14,6 +29,9 @@ export default function HistoryPage() {
     // Modal
     const [selectedSolution, setSelectedSolution] = useState<string[] | null>(null);
     const [showModal, setShowModal] = useState(false);
+
+    const solved = displayHistory.filter(i => i.isCorrect).length;
+    const accuracy = displayHistory.length > 0 ? Math.round((solved / displayHistory.length) * 100) : 0;
 
     const totalPages = Math.ceil(displayHistory.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -33,72 +51,129 @@ export default function HistoryPage() {
         setSelectedSolution(null);
     };
 
-    return (
-        <div className="min-h-screen bg-yellow-50 flex justify-center p-4">
-        <div className="w-full max-w-6xl space-y-8">
+    if (!hydrated) {
+        return <div className="min-h-[50vh]" />;
+    }
 
-            {/* Back Link */}
-            <Link href="/" className="text-blue-600 hover:underline mb-2 block font-medium">
-            ← Back to Math Problem
-            </Link>
+    return (
+        <div className="space-y-6">
 
             {/* Page Title */}
-            <h1 className="text-4xl font-extrabold text-center mb-4">Problem History</h1>
-
-            {/* Dashboard Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-            <div className="bg-blue-500 text-white rounded-xl p-6 shadow-lg flex flex-col items-center justify-center hover:scale-105 transition-transform">
-                <p className="text-sm">Total Problems</p>
-                <p className="text-3xl font-extrabold">{displayHistory.length}</p>
+            <div>
+                <h1 className="page-title">{t('historyTitle')}</h1>
             </div>
 
-            <div className="bg-green-500 text-white rounded-xl p-6 shadow-lg flex flex-col items-center justify-center hover:scale-105 transition-transform">
-                <p className="text-sm">Problems Solved</p>
-                <p className="text-3xl font-extrabold">{displayHistory.filter(i => i.isCorrect).length}</p>
+            <div className="max-w-sm">
+                <Segmented<'practice' | 'drill'>
+                    label=""
+                    value={tab}
+                    onChange={setTab}
+                    columns={2}
+                    options={[
+                        { value: 'practice', label: `✏️ ${t('tabPractice')}` },
+                        { value: 'drill', label: `⚡ ${t('tabDrill')}` },
+                    ]}
+                />
             </div>
 
-            <div className="bg-amber-500 text-white rounded-xl p-6 shadow-lg flex flex-col items-center justify-center hover:scale-105 transition-transform">
-                <p className="text-sm">Accuracy</p>
-                <p className="text-3xl font-extrabold">
-                {displayHistory.length > 0
-                    ? Math.round((displayHistory.filter(i => i.isCorrect).length / displayHistory.length) * 100)
-                    : 0}%
-                </p>
-            </div>
+            {tab === 'drill' && (
+            <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-3">
+                    {[
+                        { label: t('rounds'), value: drillHistory.length, color: 'text-slate-900' },
+                        { label: t('bestRound'), value: bestDrill, color: 'text-green-600' },
+                        { label: t('avgAccuracy'), value: `${drillAccuracy}%`, color: 'text-amber-600' },
+                    ].map(stat => (
+                        <div key={stat.label} className="card px-4 py-3">
+                            <p className="text-xs text-slate-500">{stat.label}</p>
+                            <p className={`text-xl font-extrabold ${stat.color}`}>{stat.value}</p>
+                        </div>
+                    ))}
+                </div>
 
-            <div className="bg-purple-500 text-white rounded-xl p-6 shadow-lg flex flex-col items-center justify-center hover:scale-105 transition-transform">
-                <p className="text-sm">Total Score</p>
-                <p className="text-3xl font-extrabold">{score}</p>
+                {displayDrills.length === 0 ? (
+                <div className="rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center space-y-4">
+                    <p className="text-slate-600">{t('noDrillHistory')}</p>
+                    <Link href="/drill" className="btn-primary">⚡ {t('navDrill')}</Link>
+                </div>
+                ) : (
+                <div className="card divide-y divide-slate-100">
+                    {displayDrills.map(round => {
+                        const pct = round.attempted > 0 ? Math.round((round.correct / round.attempted) * 100) : 0;
+                        return (
+                            <div key={round.id} className="px-4 py-3 md:px-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+                                <div className="flex-1 min-w-[10rem]">
+                                    <p className="font-semibold text-slate-900">{t('drillRoundLine', { correct: round.correct, attempted: round.attempted })}</p>
+                                    <p className="text-xs text-slate-500">{formatDate(round.date)}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="chip bg-teal-50 text-teal-700">{t('gradeN', { n: round.grade })}</span>
+                                    <span className="chip">{t('seconds', { n: round.seconds })}</span>
+                                </div>
+                                <div className="w-full sm:w-32 flex items-center gap-2">
+                                    <div className="h-1.5 flex-1 bg-slate-100 rounded-full overflow-hidden">
+                                        <div className={`h-full rounded-full ${pct >= 80 ? 'bg-green-500' : pct >= 50 ? 'bg-amber-400' : 'bg-red-400'}`} style={{ width: `${pct}%` }} />
+                                    </div>
+                                    <span className="text-xs font-semibold text-slate-600 w-9 text-right">{pct}%</span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                )}
             </div>
+            )}
+
+            {tab === 'practice' && (<>
+            {/* Stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                    { label: t('totalProblems'), value: displayHistory.length, color: 'text-slate-900' },
+                    { label: t('problemsSolved'), value: solved, color: 'text-green-600' },
+                    { label: t('statAccuracy'), value: `${accuracy}%`, color: 'text-amber-600' },
+                    { label: t('totalScore'), value: score, color: 'text-teal-700' },
+                ].map(stat => (
+                    <div key={stat.label} className="card px-4 py-3">
+                        <p className="text-xs text-slate-500">{stat.label}</p>
+                        <p className={`text-xl font-extrabold ${stat.color}`}>{stat.value}</p>
+                    </div>
+                ))}
             </div>
 
             {/* History Items */}
             {displayHistory.length === 0 ? (
-            <p className="text-gray-600 text-center">You haven't completed any problems yet. Go back and start solving!</p>
+            <div className="rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center space-y-4">
+                <p className="text-slate-600">{t('noHistory')}</p>
+                <Link href="/practice" className="btn-primary">
+                    ✏️ {t('navPractice')}
+                </Link>
+            </div>
             ) : (
-            <div className="space-y-6">
+            <div className="space-y-4">
                 {currentItems.map((item: HistoryItem, index: number) => (
-                <div key={item.id} className="p-4 border rounded-2xl shadow-md bg-white hover:shadow-lg transition-shadow">
-                    <p className="font-bold text-lg mb-2">
-                    Problem {displayHistory.length - (startIndex + index)}{" "}
+                <div key={item.id} className="card p-4 md:p-5">
+                    <p className="font-bold text-base mb-2">
+                    {t('problemN', { n: displayHistory.length - (startIndex + index) })}{" "}
                     <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-bold ${item.isCorrect ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                        {item.isCorrect ? "✅ Correct" : "❌ Incorrect"}
+                        {item.isCorrect ? t('correct') : t('incorrect')}
                     </span>
                     </p>
 
-                    <p className="mb-1 text-sm"><strong>Question:</strong> {item.problem}</p>
+                    <p className="mb-1 text-sm"><strong>{t('question')}:</strong> {item.problem}</p>
                     <div className="flex flex-wrap gap-3 items-center mt-2 text-sm">
-                    <p><strong>Your Answer:</strong> {item.userAnswer}</p>
-                    <span className="text-gray-400">|</span>
-                    <p><strong>Correct Answer:</strong> {item.correctAnswer}</p>
-                    <span className="text-gray-400">|</span>
+                    <p><strong>{t('yourAnswer')}</strong> {item.userAnswer}</p>
+                    <span className="text-slate-400">|</span>
+                    <p><strong>{t('correctAnswer')}:</strong> {item.correctAnswer}</p>
                     {item.step_by_step_solution && (
+                        <>
+                        <span className="text-slate-400">|</span>
                         <button
                         onClick={() => openSolutionModal(item.step_by_step_solution)}
-                        className="px-3 py-1 bg-pink-500 text-white rounded-lg text-sm font-semibold hover:bg-pink-600 transition-colors"
+                        className="btn-ghost py-1 text-teal-700"
                         >
-                        💡 View Solution
+                        {t('viewSolution')}
                         </button>
+                        </>
                     )}
                     </div>
                 </div>
@@ -109,35 +184,30 @@ export default function HistoryPage() {
                 <button
                     onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
                     disabled={currentPage === 1}
-                    className="px-4 py-2 bg-blue-200 rounded-md font-semibold disabled:opacity-50 hover:bg-blue-300 transition-colors"
+                    className="btn-secondary py-2"
                 >
-                    ⬅️ Prev
+                    {t('prev')}
                 </button>
                 <span className="text-sm font-medium">
-                    Page {currentPage} of {totalPages}
+                    {t('pageOf', { page: currentPage, total: totalPages })}
                 </span>
                 <button
                     onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className="px-4 py-2 bg-blue-200 rounded-md font-semibold disabled:opacity-50 hover:bg-blue-300 transition-colors"
+                    className="btn-secondary py-2"
                 >
-                    Next ➡️
+                    {t('next')}
                 </button>
                 </div>
             </div>
             )}
-            <button
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-16 right-6 bg-indigo-500 text-white px-4 py-2 rounded-full shadow-lg hover:bg-indigo-600 transition-all"
-            >
-            ↑ Back to Top
-            </button>
+            </>)}
             {/* Solution Modal */}
             {showModal && selectedSolution && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-2xl max-w-lg w-full mx-4 relative">
-                <h2 className="text-2xl font-bold text-indigo-700 dark:text-indigo-300 mb-4">Step by Step Solution</h2>
-                <ul className="space-y-2 text-gray-700 dark:text-gray-200">
+                <div className="bg-white p-6 rounded-xl shadow-2xl max-w-lg w-full mx-4 relative">
+                <h2 className="text-2xl font-bold text-teal-700 mb-4">{t('stepByStep')}</h2>
+                <ul className="space-y-2 text-slate-700">
                 {selectedSolution.map((step, i) => (
                     <li key={i} className="leading-relaxed">
                     {step}
@@ -146,14 +216,13 @@ export default function HistoryPage() {
                 </ul>
                 <button
                     onClick={closeModal}
-                    className="mt-6 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md font-semibold float-right transition-all"
+                    className="btn-primary mt-6 float-right"
                 >
-                    Close
+                    {t('close')}
                 </button>
                 </div>
             </div>
             )}
-        </div>
         </div>
     );
     }
