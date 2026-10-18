@@ -7,9 +7,21 @@ import AppShell from '../components/AppShell'
 
 const inter = Inter({ subsets: ['latin'] })
 
+const SITE_URL = 'https://mathtutor-my.vercel.app'
+const SITE_DESCRIPTION = 'Maths practice for Malaysian primary pupils (Year 1–6, KSSR): AI word problems with full working, quick drills and printable worksheets.'
+
 export const metadata: Metadata = {
-  title: 'Math Problem Generator',
-  description: 'AI-powered math problem generator for Primary 5 students',
+  metadataBase: new URL(SITE_URL),
+  title: 'MathTutor MY',
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    title: 'MathTutor MY',
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    siteName: 'MathTutor MY',
+    locale: 'ms_MY',
+    type: 'website',
+  },
   icons: {
     // This handles the main <link rel="icon" href="/favicon.png" />
     icon: '/favicon.png', 

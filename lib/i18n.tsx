@@ -5,7 +5,7 @@ export type Language = 'en' | 'ms';
 
 const dictionary = {
     // App shell
-    appName: { en: 'Math Problem Generator', ms: 'Penjana Soalan Matematik' },
+    appName: { en: 'MathTutor MY', ms: 'MathTutor MY' },
     appTagline: { en: 'Primary Math · Year 1–6', ms: 'Matematik Tahun 1–6' },
     navHome: { en: 'Home', ms: 'Utama' },
     navPractice: { en: 'Practice', ms: 'Latihan' },

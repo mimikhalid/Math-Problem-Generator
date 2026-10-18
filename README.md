@@ -1,8 +1,17 @@
-# Math Problem Generator - Developer Assessment Starter Kit
+# MathTutor MY
+
+**Live:** [mathtutor-my.vercel.app](https://mathtutor-my.vercel.app)
 
 ## Overview
 
-This is a starter kit for building an AI-powered math problem generator application. The goal is to create a standalone prototype that uses AI to generate math word problems suitable for Primary 5 students, saves the problems and user submissions to a database, and provides personalized feedback.
+MathTutor MY is a maths practice app for Malaysian primary school pupils (Tahun 1–6, KSSR syllabus), in Bahasa Melayu or English.
+
+- **Latihan (Practice)**: AI-generated word problems in sets of 5, 10 or 15, as written answers or objective (A–D), with hints, step-by-step working and an end-of-set review.
+- **Latih Tubi (Quick Drill)**: timed mental sums sized to each year, with best scores and a round log.
+- **Lembaran Kerja (Worksheet)**: printable worksheets with an answer key (print or save as PDF).
+- **Sejarah (History)**: practice answers and drill rounds, with accuracy stats.
+
+Problems and submissions are saved to Supabase; questions are generated with Google Gemini, falling back across models when the free-tier quota runs out.
 
 ## Tech Stack
 
