@@ -1,14 +1,14 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { QuizProvider } from '../lib/QuizContext'
 import { LanguageProvider } from '../lib/i18n'
 import AppShell from '../components/AppShell'
 
-const inter = Inter({ subsets: ['latin'] })
+const font = Plus_Jakarta_Sans({ subsets: ['latin'] })
 
 const SITE_URL = 'https://mathtutor-my.vercel.app'
-const SITE_DESCRIPTION = 'Maths practice for Malaysian primary pupils (Year 1–6, KSSR): AI word problems with full working, quick drills and printable worksheets.'
+const SITE_DESCRIPTION = 'Maths practice for Malaysian primary pupils (Year 1–6, KSSR): word problems with full working, quick drills and printable worksheets.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -37,7 +37,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={font.className}>
         <LanguageProvider>
           <QuizProvider>
             <AppShell>{children}</AppShell>

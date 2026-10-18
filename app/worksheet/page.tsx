@@ -5,6 +5,7 @@ import { useLanguage } from '../../lib/i18n'
 import { useGrade } from '../../lib/useGrade'
 import { Grade, OPTION_LETTERS, QuestionFormat, findTopic, topicsForGrade } from '../../lib/curriculum'
 import { FormatPicker, GradePicker, topicLabel } from '../../components/Pickers'
+import Icon from '../../components/Icon'
 
 type Difficulty = 'easy' | 'medium' | 'hard'
 
@@ -114,7 +115,7 @@ export default function WorksheetPage() {
                       onChange={() => toggleTopic(topic.id)}
                       className="sr-only"
                     />
-                    {checked ? '✓ ' : ''}{topicLabel(topic, language)}
+                    {checked && <Icon name="check" size={14} />}{topicLabel(topic, language)}
                   </label>
                 )
               })}
@@ -191,7 +192,7 @@ export default function WorksheetPage() {
               onClick={() => window.print()}
               className="btn-accent w-full py-3 text-base"
             >
-              {t('downloadPdf')}
+              <Icon name="download" size={18} /> {t('downloadPdf')}
             </button>
             <p className="text-sm text-gray-600 text-center">{t('saveAsPdfTip')}</p>
           </div>

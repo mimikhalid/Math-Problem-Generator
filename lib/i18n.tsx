@@ -23,7 +23,7 @@ const dictionary = {
     openMenu: { en: 'Open menu', ms: 'Buka menu' },
     language: { en: 'Language', ms: 'Bahasa' },
     developedBy: { en: 'Developed by', ms: 'Dibangunkan oleh' },
-    backToTop: { en: '↑ Back to Top', ms: '↑ Ke Atas' },
+    backToTop: { en: 'Back to top', ms: 'Ke atas' },
 
     // Home
     homeEyebrow: { en: 'Primary Math · Year 1–6 · KSSR', ms: 'Matematik Tahun 1–6 · KSSR' },
@@ -40,6 +40,8 @@ const dictionary = {
     step2Body: { en: 'Written answers or objective A–D, with a hint when you need it.', ms: 'Jawapan bertulis atau objektif A–D, dengan petunjuk bila perlu.' },
     step3Title: { en: 'Learn from the working', ms: 'Belajar dari jalan kerja' },
     step3Body: { en: 'Every question shows the full working, so mistakes become lessons.', ms: 'Setiap soalan tunjuk jalan kerja penuh, supaya kesilapan jadi pelajaran.' },
+    sampleQuestion: { en: 'Aina buys 3 pencils at RM2 each and a ruler for RM4. How much does she pay altogether?', ms: 'Aina membeli 3 batang pensel berharga RM2 sebatang dan sebatang pembaris berharga RM4. Berapakah jumlah bayarannya?' },
+    sampleWorking: { en: '3 × RM2 = RM6, then RM6 + RM4 = RM10', ms: '3 × RM2 = RM6, kemudian RM6 + RM4 = RM10' },
     yourProgress: { en: 'Your progress', ms: 'Kemajuan anda' },
     progressLine: { en: '{n} questions answered · {pct}% correct · {rounds} drill rounds', ms: '{n} soalan dijawab · {pct}% betul · {rounds} pusingan latih tubi' },
     viewHistory: { en: 'View history', ms: 'Lihat sejarah' },
@@ -64,11 +66,11 @@ const dictionary = {
 
     // Practice
     practiceTitle: { en: 'Practice', ms: 'Latihan' },
-    practiceSubtitle: { en: 'AI-generated word problems that follow the KSSR syllabus for your year.', ms: 'Soalan berayat yang dijana AI mengikut silibus KSSR untuk tahun anda.' },
+    practiceSubtitle: { en: 'Word problems that follow the KSSR syllabus for your year.', ms: 'Soalan berayat mengikut silibus KSSR untuk tahun anda.' },
     chooseProblemType: { en: 'Choose Problem Type', ms: 'Pilih Jenis Soalan' },
     challengeYourself: { en: 'Challenge Yourself!', ms: 'Cuba Sekarang!' },
     generating: { en: 'Generating...', ms: 'Sedang dijana...' },
-    theProblem: { en: '📝 The Problem:', ms: '📝 Soalan:' },
+    theProblem: { en: 'Question', ms: 'Soalan' },
     yourAnswer: { en: 'Your Answer:', ms: 'Jawapan Anda:' },
     enterAnswer: { en: 'Enter your answer', ms: 'Masukkan jawapan anda' },
     pleaseEnterAnswer: { en: 'Please enter your answer.', ms: 'Sila masukkan jawapan anda.' },
@@ -108,7 +110,7 @@ const dictionary = {
     praiseCorrect: { en: 'Well done, that is correct!', ms: 'Tahniah, jawapan anda betul!' },
     encourageIncorrect: { en: 'Not quite. Read the working below to see how it is solved.', ms: 'Kurang tepat. Baca jalan kerja di bawah untuk melihat cara penyelesaian.' },
     yourAnswerWas: { en: 'Your answer', ms: 'Jawapan anda' },
-    nextQuestion: { en: 'Next Question →', ms: 'Soalan Seterusnya →' },
+    nextQuestion: { en: 'Next Question', ms: 'Soalan Seterusnya' },
     generateFailed: { en: 'Could not generate a problem. Please try again.', ms: 'Gagal menjana soalan. Sila cuba lagi.' },
 
     // Worksheet
@@ -124,7 +126,7 @@ const dictionary = {
     generatingProblems: { en: 'Generating {n} problems...', ms: 'Sedang menjana {n} soalan...' },
     pickOneType: { en: 'Pick at least one topic', ms: 'Pilih sekurang-kurangnya satu topik' },
     worksheetFailed: { en: 'Could not generate the worksheet. Please try again.', ms: 'Gagal menjana lembaran kerja. Sila cuba lagi.' },
-    downloadPdf: { en: '⬇️ Download PDF / Print', ms: '⬇️ Muat Turun PDF / Cetak' },
+    downloadPdf: { en: 'Download PDF / Print', ms: 'Muat Turun PDF / Cetak' },
     saveAsPdfTip: { en: 'In the print dialog, choose "Save as PDF" as the destination to download a PDF.', ms: 'Dalam tetingkap cetak, pilih "Save as PDF" sebagai destinasi untuk muat turun PDF.' },
     worksheetHeading: { en: '{types} Worksheet', ms: 'Lembaran Kerja {types}' },
     worksheetMeta: { en: 'Year {grade} · {difficulty} · {n} questions', ms: 'Tahun {grade} · {difficulty} · {n} soalan' },
@@ -145,7 +147,7 @@ const dictionary = {
     timesUp: { en: "⏰ Time's up!", ms: '⏰ Masa tamat!' },
     drillResult: { en: 'You got {correct} correct out of {total}.', ms: 'Anda betul {correct} daripada {total} soalan.' },
     bestScore: { en: 'Best score (Year {grade}, {secs}s): {best}', ms: 'Markah terbaik (Tahun {grade}, {secs}s): {best}' },
-    newBest: { en: '🏆 New best score!', ms: '🏆 Markah terbaik baharu!' },
+    newBest: { en: 'New best score!', ms: 'Markah terbaik baharu!' },
     playAgain: { en: 'Play Again', ms: 'Main Lagi' },
     stop: { en: 'Stop', ms: 'Berhenti' },
 
@@ -163,13 +165,13 @@ const dictionary = {
     totalScore: { en: 'Total Score', ms: 'Jumlah Mata' },
     noHistory: { en: "You haven't completed any problems yet. Go to Practice and start solving!", ms: 'Anda belum menjawab sebarang soalan. Pergi ke Latihan dan mula menjawab!' },
     problemN: { en: 'Problem {n}', ms: 'Soalan {n}' },
-    correct: { en: '✅ Correct', ms: '✅ Betul' },
-    incorrect: { en: '❌ Incorrect', ms: '❌ Salah' },
+    correct: { en: 'Correct', ms: 'Betul' },
+    incorrect: { en: 'Incorrect', ms: 'Salah' },
     question: { en: 'Question', ms: 'Soalan' },
-    viewSolution: { en: '💡 View Solution', ms: '💡 Lihat Jalan Kerja' },
+    viewSolution: { en: 'View working', ms: 'Lihat jalan kerja' },
     stepByStep: { en: 'Step by Step Solution', ms: 'Jalan Kerja Langkah demi Langkah' },
-    prev: { en: '⬅️ Prev', ms: '⬅️ Sebelum' },
-    next: { en: 'Next ➡️', ms: 'Seterusnya ➡️' },
+    prev: { en: 'Previous', ms: 'Sebelum' },
+    next: { en: 'Next', ms: 'Seterusnya' },
     pageOf: { en: 'Page {page} of {total}', ms: 'Halaman {page} daripada {total}' },
 } satisfies Record<string, Record<Language, string>>;
 

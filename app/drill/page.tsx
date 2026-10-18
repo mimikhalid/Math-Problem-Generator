@@ -5,6 +5,7 @@ import { useLanguage } from '../../lib/i18n'
 import { useGrade } from '../../lib/useGrade'
 import { Grade } from '../../lib/curriculum'
 import { GradePicker, Segmented } from '../../components/Pickers'
+import Icon from '../../components/Icon'
 import { useQuiz } from '../../lib/QuizContext'
 
 interface Sum {
@@ -159,7 +160,7 @@ export default function DrillPage() {
             options={DURATIONS.map(secs => ({ value: secs, label: t('seconds', { n: secs }) }))}
           />
 
-          <p className="text-sm text-slate-500">🏆 {t('bestScore', { grade, secs: duration, best })}</p>
+          <p className="flex items-center gap-2 text-sm text-slate-500"><Icon name="trophy" size={16} className="text-amber-500" /> {t('bestScore', { grade, secs: duration, best })}</p>
 
           <button
             onClick={start}
@@ -186,11 +187,11 @@ export default function DrillPage() {
               <p className={`text-xl font-extrabold tabular-nums ${timeLeft <= 10 ? 'text-red-600' : 'text-slate-900'}`}>{minutes}:{seconds}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500">✅ {t('statSolved')}</p>
+              <p className="flex items-center justify-center gap-1 text-xs text-slate-500"><Icon name="check" size={14} /> {t('statSolved')}</p>
               <p className="text-xl font-extrabold text-green-600 tabular-nums">{correct}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-500">🔥 {t('streak')}</p>
+              <p className="flex items-center justify-center gap-1 text-xs text-slate-500"><Icon name="flame" size={14} /> {t('streak')}</p>
               <p className="text-xl font-extrabold text-amber-600 tabular-nums">{streak}</p>
             </div>
           </div>
@@ -225,7 +226,7 @@ export default function DrillPage() {
           <div className="min-h-[1.5rem] text-center text-sm" aria-live="polite">
             {flash && (
               <span className={flash.ok ? 'text-green-700' : 'text-red-700'}>
-                {flash.ok ? '✅' : '❌'} {flash.text}
+                <Icon name={flash.ok ? 'checkCircle' : 'xCircle'} size={16} className="inline -mt-0.5 mr-1" />{flash.text}
               </span>
             )}
           </div>

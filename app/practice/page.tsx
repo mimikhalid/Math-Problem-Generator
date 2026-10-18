@@ -6,6 +6,7 @@ import { useLanguage } from '../../lib/i18n';
 import { useGrade } from '../../lib/useGrade';
 import { OPTION_LETTERS, QuestionFormat, findTopic, topicsForGrade } from '../../lib/curriculum';
 import { FormatPicker, GradePicker, Segmented, topicLabel } from '../../components/Pickers';
+import Icon from '../../components/Icon';
 
 type Difficulty = 'easy' | 'medium' | 'hard'
 
@@ -233,7 +234,7 @@ export default function Home() {
           </div>
           {stage !== 'loading' && (
             <button onClick={() => setStage('setup')} className="btn-ghost py-1.5 text-teal-700">
-              ⚙️ {t('changeSettings')}
+              <Icon name="sliders" size={16} /> {t('changeSettings')}
             </button>
           )}
         </div>
@@ -242,7 +243,7 @@ export default function Home() {
       {/* --- Empty state --- */}
       {stage === 'setup' && !error && (
         <div className="rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center">
-          <p className="text-4xl" aria-hidden="true">🧠</p>
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-700"><Icon name="book" size={22} /></span>
           <p className="mt-2 font-semibold text-slate-800">{t('practiceEmptyTitle')}</p>
           <p className="mt-1 text-sm text-slate-500 max-w-md mx-auto">{t('practiceEmptyBody')}</p>
         </div>
@@ -282,7 +283,7 @@ export default function Home() {
 
           {showHint && !answer && (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              <span className="font-semibold">💡 {t('hint')}: </span>{problem.hint_text}
+              <Icon name="lightbulb" size={16} className="inline -mt-0.5 mr-1.5 text-amber-600" /><span className="font-semibold">{t('hint')}: </span>{problem.hint_text}
             </div>
           )}
 
@@ -341,7 +342,7 @@ export default function Home() {
             {!answer && (
               <div className="flex flex-col-reverse sm:flex-row gap-3">
                 <button type="button" onClick={() => setShowHint(h => !h)} className="btn-secondary">
-                  💡 {t('getHint')}
+                  <Icon name="lightbulb" size={16} /> {t('getHint')}
                 </button>
                 <button
                   type="submit"
@@ -359,7 +360,7 @@ export default function Home() {
           {answer && (
             <div aria-live="polite" className={`rounded-xl border px-4 py-4 space-y-3 ${answer.isCorrect ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
               <div className="flex items-start gap-3">
-                <span className="text-2xl leading-none" aria-hidden="true">{answer.isCorrect ? '🎉' : '🤔'}</span>
+                <Icon name={answer.isCorrect ? 'checkCircle' : 'xCircle'} size={24} className={answer.isCorrect ? 'text-green-600' : 'text-red-500'} />
                 <div className="space-y-1">
                   <p className={`font-bold ${answer.isCorrect ? 'text-green-800' : 'text-red-800'}`}>
                     {answer.isCorrect ? t('correctAnswerTitle') : t('incorrectAnswerTitle')}
@@ -383,7 +384,7 @@ export default function Home() {
 
           {answer && (
             <button onClick={goNext} autoFocus className="btn-accent w-full py-3">
-              {index + 1 >= problems.length ? t('seeResults') : t('nextQuestion')}
+              {index + 1 >= problems.length ? t('seeResults') : t('nextQuestion')} <Icon name="arrowRight" size={16} />
             </button>
           )}
         </div>
@@ -399,8 +400,8 @@ export default function Home() {
             </p>
             <p className="text-slate-600 max-w-md mx-auto">{summaryMessage}</p>
             <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
-              <button onClick={() => beginQuiz(problems)} className="btn-secondary">🔁 {t('retrySet')}</button>
-              <button onClick={startSet} className="btn-primary">✨ {t('newSet')}</button>
+              <button onClick={() => beginQuiz(problems)} className="btn-secondary"><Icon name="rotate" size={16} /> {t('retrySet')}</button>
+              <button onClick={startSet} className="btn-primary"><Icon name="plus" size={16} /> {t('newSet')}</button>
             </div>
           </div>
 
@@ -411,7 +412,7 @@ export default function Home() {
               return (
                 <details key={p.session_id} className="group px-5 py-3">
                   <summary className="flex cursor-pointer items-start gap-3 list-none">
-                    <span aria-hidden="true">{a?.isCorrect ? '✅' : '❌'}</span>
+                    <Icon name={a?.isCorrect ? 'checkCircle' : 'xCircle'} size={18} className={`mt-0.5 ${a?.isCorrect ? 'text-green-600' : 'text-red-500'}`} />
                     <span className="flex-1 text-sm text-slate-800 line-clamp-2 group-open:line-clamp-none">{i + 1}. {p.problem_text}</span>
                   </summary>
                   <div className="mt-2 ml-8 space-y-1 text-sm text-slate-600">

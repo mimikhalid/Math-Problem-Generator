@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useQuiz, HistoryItem } from "../../lib/QuizContext";
 import { Segmented } from "../../components/Pickers";
+import Icon from "../../components/Icon";
 import { useLanguage } from "../../lib/i18n";
 
 export default function HistoryPage() {
@@ -70,8 +71,8 @@ export default function HistoryPage() {
                     onChange={setTab}
                     columns={2}
                     options={[
-                        { value: 'practice', label: `✏️ ${t('tabPractice')}` },
-                        { value: 'drill', label: `⚡ ${t('tabDrill')}` },
+                        { value: 'practice', label: t('tabPractice') },
+                        { value: 'drill', label: t('tabDrill') },
                     ]}
                 />
             </div>
@@ -94,7 +95,7 @@ export default function HistoryPage() {
                 {displayDrills.length === 0 ? (
                 <div className="rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center space-y-4">
                     <p className="text-slate-600">{t('noDrillHistory')}</p>
-                    <Link href="/drill" className="btn-primary">⚡ {t('navDrill')}</Link>
+                    <Link href="/drill" className="btn-primary"><Icon name="zap" size={16} /> {t('navDrill')}</Link>
                 </div>
                 ) : (
                 <div className="card divide-y divide-slate-100">
@@ -145,7 +146,7 @@ export default function HistoryPage() {
             <div className="rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center space-y-4">
                 <p className="text-slate-600">{t('noHistory')}</p>
                 <Link href="/practice" className="btn-primary">
-                    ✏️ {t('navPractice')}
+                    <Icon name="pencil" size={16} /> {t('navPractice')}
                 </Link>
             </div>
             ) : (
